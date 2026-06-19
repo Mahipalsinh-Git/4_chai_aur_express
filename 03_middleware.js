@@ -3,7 +3,14 @@ import express, { json } from "express";
 function block_1_Middleware() {
   return new Promise((resolve) => {
     const app = express();
-    app.use(express.json());
+    app.use(express.json({ limit: "50kb" })); // means json-payload size below 50kb
+    app.use(express.urlencoded({ extended: true })); // extended for if nested data content encoded
+    app.use(
+      express.static(root, {
+        dotfiles: "ignore",
+        maxAge: 0, // for cache control
+      }),
+    );
 
     const logs = [];
 
@@ -56,6 +63,25 @@ function block_1_Middleware() {
         }
       };
     }
+
+    function rateLimit(maxRequest) {
+      let count = 0;
+
+      return (req, res, next) => {
+        count++;
+
+        if (count > maxRequest) {
+          return res
+            .status(429)
+            .json({ error: "Too many request, please try after sometime" });
+        }
+
+        next();
+      };
+    }
+
+    const limitedEndPoint = rateLimit(3);
+    app.get("/limited", limitedEndPoint, (req, res) => {});
 
     // now used custom header
     app.get("/profile", authMe, getRole("admin"), another, () => {});
