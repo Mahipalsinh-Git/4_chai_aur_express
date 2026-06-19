@@ -121,6 +121,10 @@ function block_2_response() {
         message: "hello world",
       });
     });
+
+    app.get("/no-content", (req, res) => {
+      res.status(200).end();
+    });
   });
 }
 
